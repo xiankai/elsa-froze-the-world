@@ -1,77 +1,134 @@
 <!DOCTYPE html>
-<script src="http://code.jquery.com/jquery-1.11.0.min.js"></script>
-<form id="mapform" action="#">
-	<p>
-		<input id="mapinput" type="text" style="width: 80%;" value="Disneyland, 1313 S Harbor Blvd, Anaheim, CA 92802, USA" maxlength="100">
-		<input type="submit" style="width: 18%;" value="Find">
-	</p>
-<div id="mapdiv" style="height: 400px;"></div>
-<div id="mapoutput" style="background-color: #FFDD22; font-weight: bold;">Latitude:<br>Longitude:</div>
-<script type="text/javascript" src="http://maps.googleapis.com/maps/api/js?v=3.14&amp;sensor=false&amp;key=AIzaSyD3VSb2IYSKdPdcDWFffqh0pGy9S47Klzk"></script>
-<script type="text/javascript">
-	google.maps.event.addDomListener(window, "load", function() {
-		//
-		// initialize map
-		//
-		var map = new google.maps.Map(document.getElementById("mapdiv"), {
-			center: new google.maps.LatLng(33.808678, -117.918921),
-			zoom: 13,
-			mapTypeId: google.maps.MapTypeId.ROADMAP
-		});
-		//
-		// initialize marker
-		//
-		var marker = new google.maps.Marker({
-			position: map.getCenter(),
-			draggable: true,
-			map: map
-		});
-		//
-		// initialize geocoder
-		//
-		var geocoder = new google.maps.Geocoder();
-		google.maps.event.addDomListener(document.getElementById("mapform"), "submit", function(domEvent) {
-			if (domEvent.preventDefault){
-				domEvent.preventDefault();
-			} else {
-				domEvent.returnValue = false;
+
+<html lang="en">
+	<head>
+	    <meta charset="utf-8">
+	    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+	    <meta name="viewport" content="width=device-width, initial-scale=1">
+	    <title>Elsa Froze The World</title>
+
+		<!-- Latest compiled and minified CSS -->
+		<link rel="stylesheet" href="http://netdna.bootstrapcdn.com/bootstrap/3.1.1/css/bootstrap.min.css">
+	</head>
+
+	<body class="container">
+		<div class="row">
+			<form id="mapform" action="#">
+				<div class="input-group">
+					<input id="mapinput" class="form-control" type="text" placeholder="Search Google Maps"/>
+					<span class="input-group-btn">
+						<button class="btn btn-default" type="button">Search for your location</button>
+					</span>
+				</div>
+			</form>
+		</div>
+
+		<div class="row">
+			<div id="mapdiv" style="height: 400px;"></div>
+		</div>
+
+		<div class="row">
+			<form id="saveform" action="#">
+				<div class="form-group">
+					<label for="selected_location">Current Location</label>
+					<input type="text" class="form-control" id="selected_location" disabled/>
+				</div>
+				<div class="form-group">
+					<label for="user">Your Reddit Username (optional)</label>
+					<input type="text" class="form-control" name="user" id="user" placeholder="/u/username"/>
+				</div>
+				<div class="col-xs-6">
+					<button class="btn btn-primary btn-block">Submit</button>
+				</div>
+				<div class="col-xs-6">
+					<button class="btn btn-primary btn-block">View Results</button>
+				</div>
+			</form>
+		</div>
+
+		<!-- Latest jQuery -->
+		<script src="http://code.jquery.com/jquery-1.11.0.min.js"></script>
+		<!-- Latest compiled and minified JavaScript -->
+		<script src="http://netdna.bootstrapcdn.com/bootstrap/3.1.1/js/bootstrap.min.js"></script>
+		<script src="http://maps.googleapis.com/maps/api/js?v=3.14&amp;sensor=false&amp;key=AIzaSyD3VSb2IYSKdPdcDWFffqh0pGy9S47Klzk"></script>
+		<script>
+			function geocoderResultCallback() {
 			}
-			geocoder.geocode({
-				address: document.getElementById("mapinput").value
-			}, function(results, status) {
-				if (status == google.maps.GeocoderStatus.OK) {
-					var result = results[0];
-					document.getElementById("mapinput").value = result.formatted_address;
-					if (result.geometry.viewport) {
-						map.fitBounds(result.geometry.viewport);
+
+			google.maps.event.addDomListener(window, "load", function() {
+				var centering = false;
+
+				// initialize map
+				var map = new google.maps.Map(document.getElementById("mapdiv"), {
+					center: new google.maps.LatLng(34.155478, -118.322957),
+					zoom: 17,
+					mapTypeId: google.maps.MapTypeId.ROADMAP
+				});
+
+				var geocodeCallback = function(results, status) {
+					if (status == google.maps.GeocoderStatus.OK) {
+						var result = results[0];
+						$('#selected_location').val(result.formatted_address);
+						if (result.geometry.viewport) {
+							map.fitBounds(result.geometry.viewport);
+						}
+						else {
+							map.setCenter(result.geometry.location);
+						}
+					} else if (status == google.maps.GeocoderStatus.ZERO_RESULTS) {
+						alert("Sorry, the geocoder failed to locate the specified address.");
+					} else {
+						alert("Sorry, the geocoder failed with an internal error.");
 					}
-					else {
-						map.setCenter(result.geometry.location);
-					}
-				} else if (status == google.maps.GeocoderStatus.ZERO_RESULTS) {
-					alert("Sorry, the geocoder failed to locate the specified address.");
-				} else {
-					alert("Sorry, the geocoder failed with an internal error.");
 				}
+				
+				// initialize marker
+				var marker = new google.maps.Marker({
+					position: map.getCenter(),
+					draggable: true,
+					map: map
+				});
+				
+				// initialize geocoder
+				var geocoder = new google.maps.Geocoder();
+				google.maps.event.addDomListener(document.getElementById("mapform"), "submit", function(domEvent) {
+					if (domEvent.preventDefault){
+						domEvent.preventDefault();
+					} else {
+						domEvent.returnValue = false;
+					}
+					geocoder.geocode({
+						address: $('#mapinput').val()
+					}, geocodeCallback);
+				});
+
+				// intercept map and marker movements
+				google.maps.event.addListener(map, "idle", function() {
+					if (centering) {
+						centering = false;
+						return;
+					}
+
+					var center = map.getCenter();
+					marker.setPosition(center);
+
+					var map_link = 'https://maps.google.com/maps?q=' + encodeURIComponent(center.toUrlValue());
+					$('#mapoutput').html('<a href="' + map_link + '" target="_blank">View on Google Maps</a>');
+
+					centering = true;
+
+					// reverse geocode
+					var latLng = new google.maps.LatLng(center.lat(), center.lng());
+					geocoder.geocode({
+						latLng: latLng
+					}, geocodeCallback);
+				});
+
+				// center map
+				google.maps.event.addListener(marker, "dragend", function(mapEvent) {
+					map.panTo(mapEvent.latLng);
+				});
 			});
-		});
-		//
-		// intercept map and marker movements
-		//
-		google.maps.event.addListener(map, "idle", function() {
-			var center = map.getCenter();
-			marker.setPosition(center);
-
-			// reverse geocode
-			var lat = center.lat();
-			var lon = center.lng();
-
-			$('#mapoutput').html('<a href=\"https://maps.google.com/maps?q=" + encodeURIComponent(map.getCenter().toUrlValue()) + "\" target=\"_blank\" style=\"float: right;\">Go to maps.google.com</a>' +
-				"Latitude: " + lat.toFixed(6) +
-				"<br>Longitude: " + lon.toFixed(6));
-		});
-		google.maps.event.addListener(marker, "dragend", function(mapEvent) {
-			map.panTo(mapEvent.latLng);
-		});
-	});
-</script>
+		</script>
+	</body>
+</html>
