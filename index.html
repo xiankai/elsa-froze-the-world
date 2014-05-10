@@ -46,7 +46,7 @@
 					<button class="btn btn-success btn-block">Submit</button>
 				</div>
 				<div class="col-xs-6">
-					<a href="http://xiankai.github.io/frozen-world" class="btn btn-primary btn-block" id="poll_results">View Poll Results</a>
+					<a href="http://xiankai.github.io/frozen-demographics" class="btn btn-primary btn-block" id="poll_results">View Poll Results</a>
 				</div>
 			</form>
 		</div>
@@ -138,7 +138,8 @@
 			Parse.initialize("T0eL2XdYC7LrjI4gFuvA5rJntBpDuYuZaszKt8tC", "pcq6oIWXRSdCFZjLCbwc3RNYqUaOZbnLhNjgabs1");
 
 			// Form submit
-			$('#saveform').on('submit', function() {
+			$('#saveform').on('submit', function(e) {
+				e.preventDefault();
 				var loc = current_location.address_components;
 				var form_data = {};
 
